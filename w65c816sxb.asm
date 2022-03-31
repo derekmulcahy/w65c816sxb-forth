@@ -24,11 +24,7 @@
 ;
 ;-------------------------------------------------------------------------------
 
-                pw      132
-                inclist on
-
-                chip    65816
-
+                .include "ca65.inc"
                 include "w65c816.inc"
                 include "w65c816sxb.inc"
 
@@ -113,7 +109,7 @@ IRQ:
 
 ; Handle IRQ interrupts in native mode.
 
-BRK:
+_BRK:
                 bra     $                       ; Loop forever
 
 ; Handle IRQ interrupts in native mode.
@@ -125,7 +121,7 @@ NMI:
 
 ; COP and ABORT interrupts are not handled.
 
-COP:
+_COP:
                 bra     $                       ; Loop forever
 
 ABORT:
@@ -314,46 +310,45 @@ RomCheck:
 ; Reset Vectors
 ;-------------------------------------------------------------------------------
 
-ShadowVectors   section offset $7ee0
+.segment "VECTORS"
 
                 ds      4                       ; Reserved
-                dw      COP                     ; $FFE4 - COP(816)
-                dw      BRK                     ; $FFE6 - BRK(816)
+                dw      _COP                     ; $FFE4 - COP(816)
+                dw      _BRK                     ; $FFE6 - BRK(816)
                 dw      ABORT                   ; $FFE8 - ABORT(816)
                 dw      NMI                     ; $FFEA - NMI(816)
                 ds      2                       ; Reserved
                 dw      IRQ                     ; $FFEE - IRQ(816)
 
                 ds      4
-                dw      COP                     ; $FFF4 - COP(C02)
+                dw      _COP                     ; $FFF4 - COP(C02)
                 ds      2                       ; $Reserved
                 dw      ABORT                   ; $FFF8 - ABORT(C02)
                 dw      NMIRQ                   ; $FFFA - NMI(C02)
                 dw      RESET                   ; $FFFC - RESET(C02)
                 dw      IRQBRK                  ; $FFFE - IRQBRK(C02)
 
-                ends
 
 ;------------------------------------------------------------------------------
 
-Vectors         section offset $ffe0
+; Vectors         section offset $ffe0
 
-                ds      4                       ; Reserved
-                dw      COP                     ; $FFE4 - COP(816)
-                dw      BRK                     ; $FFE6 - BRK(816)
-                dw      ABORT                   ; $FFE8 - ABORT(816)
-                dw      NMI                     ; $FFEA - NMI(816)
-                ds      2                       ; Reserved
-                dw      IRQ                     ; $FFEE - IRQ(816)
+;                 ds      4                       ; Reserved
+;                 dw      COP                     ; $FFE4 - COP(816)
+;                 dw      BRK                     ; $FFE6 - BRK(816)
+;                 dw      ABORT                   ; $FFE8 - ABORT(816)
+;                 dw      NMI                     ; $FFEA - NMI(816)
+;                 ds      2                       ; Reserved
+;                 dw      IRQ                     ; $FFEE - IRQ(816)
 
-                ds      4
-                dw      COP                     ; $FFF4 - COP(C02)
-                ds      2                       ; $Reserved
-                dw      ABORT                   ; $FFF8 - ABORT(C02)
-                dw      NMIRQ                   ; $FFFA - NMI(C02)
-                dw      RESET                   ; $FFFC - RESET(C02)
-                dw      IRQBRK                  ; $FFFE - IRQBRK(C02)
+;                 ds      4
+;                 dw      COP                     ; $FFF4 - COP(C02)
+;                 ds      2                       ; $Reserved
+;                 dw      ABORT                   ; $FFF8 - ABORT(C02)
+;                 dw      NMIRQ                   ; $FFFA - NMI(C02)
+;                 dw      RESET                   ; $FFFC - RESET(C02)
+;                 dw      IRQBRK                  ; $FFFE - IRQBRK(C02)
 
-                ends
+;                 ends
 
                 end

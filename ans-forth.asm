@@ -34,14 +34,10 @@
 ; CamelForth implementations.
 ;
 ;-------------------------------------------------------------------------------
+                .include "ca65.inc"
 
-                pw      132
-                inclist on
-                maclist off
-
-                chip    65816
-                longi   off
-                longa   off
+longi off
+longa off
 
                 include "w65c816.inc"
 
@@ -55,12 +51,12 @@
 WORDZ           set     0                       ; Word counter
 WORD0           equ     0                       ; Null address for first word
 
-LINK            macro   TYPE
-                dw      WORD@<WORDZ>            ; Link
+.macro LINK TYPE
+                dw      WORDL                   ; Link
                 db      TYPE                    ; Type
 WORDZ           set     WORDZ+1
-WORD@<WORDZ>:
-                endm
+WORDL:
+.endmacro
 
 ; Deposits a word header containing the name which is linked back to the
 ; previous word.
@@ -72,24 +68,24 @@ WORD@<WORDZ>:
 NORMAL          equ     $00
 IMMEDIATE       equ     $80
 
-HEADER          macro   LEN,NAME,TYPE
+.macro HEADER LEN,NAME,TYPE
                 LINK    TYPE
                 db      LEN,NAME
-                endm
+.endmacro
 
 ; The CONTINUE macro is used at the end of a native word to invoke the next
 ; word pointer.
 
-CONTINUE        macro
+.macro CONTINUE
                 tyx                             ; Copy IP to X
                 iny
                 iny
                 jmp     (0,x)                   ; Then execute word
-                endm
+.endmacro
 
-TRAILER         macro
-LAST_WORD       equ     WORD@<WORDZ>
-                endm
+.macro TRAILER
+LAST_WORD       equ     WORDL
+.endmacro
 
 ;===============================================================================
 ; Definitions
@@ -119,7 +115,6 @@ PAD_SIZE        equ     48
 ;-------------------------------------------------------------------------------
 
                 page0
-                org     $00
 
 USER_AREA       ds      USER_SIZE               ; User Variables
 
@@ -132,7 +127,6 @@ RSTACK_END      equ     RSTACK_START+RSTACK_SIZE
 
 
                 data
-                org     $0200
 
 TIB_AREA:       ds      TIB_SIZE                ; Terminal Input Buffer
                 ds      PAD_SIZE                ; Pad area
@@ -142,7 +136,7 @@ PAD_AREA:       ds      0
 ; Forth Entry Point
 ;-------------------------------------------------------------------------------
 
-FORTH           section OFFSET $0400
+.segment "FORTH"
 
                 public  Start
 Start:
@@ -1874,7 +1868,7 @@ U_GREATER:      jsr     DO_COLON
 ; x3 is the bit-by-bit logical “and” of x1 with x2.
 
                 HEADER  3,"AND",NORMAL
-AND:
+_AND:
                 lda     <1
                 and     <3
                 sta     <3
@@ -2150,7 +2144,7 @@ QNUM_1:         dw      TWO_DROP
                 dw      R_FROM
                 dw      QUERY_BRANCH,QNUM_2
                 dw      NEGATE
-QNUM_2:         dw      DO_LITERAL,-1
+QNUM_2:         dw      DO_LITERAL,$FFFF        ; Was -1   
 QNUM_3:         dw      EXIT
 
 ; ?SIGN ( c-addr n -- adr' n' f )
@@ -2171,7 +2165,7 @@ QUERY_SIGN:     jsr     DO_COLON
                 dw      ABS
                 dw      DO_LITERAL,1
                 dw      EQUAL
-                dw      AND
+                dw      _AND
                 dw      DUP
                 dw      QUERY_BRANCH,QSIGN_1
                 dw      ONE_PLUS
@@ -2328,13 +2322,13 @@ DIGIT_QUERY:    jsr     DO_COLON
                 dw      DO_LITERAL,'9'
                 dw      GREATER
                 dw      DO_LITERAL,$100
-                dw      AND
+                dw      _AND
                 dw      PLUS
                 dw      DUP
                 dw      DO_LITERAL,$140
                 dw      GREATER
                 dw      DO_LITERAL,$107
-                dw      AND
+                dw      _AND
                 dw      MINUS
                 dw      DO_LITERAL,'0'
                 dw      MINUS
@@ -2920,7 +2914,7 @@ COMPARE:
 
 COMPARE_P:      lda     #1
                 bra     COMPARE_X
-COMPARE_N:      lda     #-1
+COMPARE_N:      lda     #$FFFF        ; Was -1  
 
 COMPARE_X:      sta     <7                      ; Save the result
                 tdc
@@ -3029,7 +3023,7 @@ DO_PLUS_LOOP:
                 sta     1,s
                 cmp     3,s                     ; Reached limit?
                 bcs     DO_PLOOP_END            ; Yes
-                lda     !0,y                    ; No, branch back to start
+                lda     0,y                     ; No, branch back to start
                 tay
                 CONTINUE                        ; Done
 
@@ -3126,9 +3120,9 @@ DO_TWO_CONSTANT:
                 dec     a
                 dec     a
                 tcd
-                lda     !1,x                    ; Transfer the value
+                lda     a:1,x                    ; Transfer the value
                 sta     <1
-                lda     !3,x
+                lda     a:3,x
                 sta     <3
                 CONTINUE                        ; Done
 
@@ -3149,9 +3143,9 @@ DO_TWO_LITERAL:
                 dec     a
                 dec     a
                 tcd
-                lda     !0,y                    ; Fetch constant from IP
+                lda     0,y                     ; Fetch constant from IP
                 sta     <1
-                lda     !2,y
+                lda     2,y
                 sta     <3
                 iny                             ; Bump IP
                 iny
@@ -3215,7 +3209,7 @@ DO_CONSTANT:
                 dec     a
                 dec     a
                 tcd
-                lda     !1,x                    ; Transfer the value
+                lda     a:1,x                    ; Transfer the value
                 sta     <1
                 CONTINUE                        ; Done
 
@@ -3257,7 +3251,7 @@ ELSE:           jsr     DO_COLON
                 dw      EXIT
 
 BRANCH:
-                lda     !0,y                    ; Load branch address into IP
+                lda     0,y                     ; Load branch address into IP
                 tay
                 CONTINUE                        ; Done
 
@@ -3311,7 +3305,7 @@ DO_LITERAL:
                 dec     a
                 dec     a
                 tcd
-                lda     !0,y                    ; Fetch constant from IP
+                lda     0,y                     ; Fetch constant from IP
                 sta     <1
                 iny
                 iny
@@ -3340,7 +3334,7 @@ DO_LOOP
                 sta     1,s
                 cmp     3,s                     ; Reached limit?
                 bcs     DO_LOOP_END             ; Yes
-                lda     !0,y                    ; No, branch back to start
+                lda     0,y                     ; No, branch back to start
                 tay
                 CONTINUE                        ; Done
 
@@ -3453,7 +3447,7 @@ DO_USER:
                 tcd
                 plx
                 clc
-                lda     !1,x
+                lda     a:1,x
                 adc     #USER_AREA
                 sta     <1
                 CONTINUE                        ; Done
@@ -3530,7 +3524,7 @@ LEFT_BRACKET:   jsr     DO_COLON
 ;
 ;   1 WORD DROP
 
-                HEADER  1,"\",IMMEDIATE
+                HEADER  1,"\",IMMEDIATE                 ; extra quote for highlight sanity "
 BACKSLASH:      jsr     DO_COLON
                 dw      DO_LITERAL,1
                 dw      WORD
@@ -3545,7 +3539,7 @@ BACKSLASH:      jsr     DO_COLON
 
                 HEADER  1,"]",NORMAL
 RIGHT_BRACKET:  jsr     DO_COLON
-                dw      DO_LITERAL,-1
+                dw      DO_LITERAL,$FFFF        ; Was -1  
                 dw      STATE
                 dw      STORE
                 dw      EXIT
@@ -3702,7 +3696,7 @@ HASH:           jsr     DO_COLON
                 dw      DO_LITERAL,9
                 dw      GREATER
                 dw      DO_LITERAL,7
-                dw      AND
+                dw      _AND
                 dw      PLUS
                 dw      DO_LITERAL,'0'
                 dw      PLUS
@@ -3787,7 +3781,7 @@ LESS_HASH:      jsr     DO_COLON
 
                 HEADER  4,"HOLD",NORMAL
 HOLD:           jsr     DO_COLON
-                dw      DO_LITERAL,-1
+                dw      DO_LITERAL,$FFFF        ; Was -1  
                 dw      HP
                 dw      PLUS_STORE
                 dw      HP

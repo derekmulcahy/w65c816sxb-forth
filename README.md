@@ -1,5 +1,8 @@
 # W65C816SXB ANS Forth
 
+This repository has a default cc65 branch which uses the CC65 Tools instead
+of the WDC Tools. The current build produces the same results as the original.
+
 This project builds a Forth environment for a WDC W65C816SXB which can be
 accessed via a USB serial connection to the ACIA port. (I use a cheap PL2303
 module with jumper wires acquired from ebay).

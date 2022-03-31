@@ -50,61 +50,61 @@ C_FLAG          equ     1<<0
 ; Puts the processor in emulation mode. A, X and Y become 8-bits and the stack
 ; is fixed at $0100-$01ff. 
 
-emulate         macro
+.macro          emulate
                 sec
                 xce
-                endm
+.endmacro
 
 ; Puts the processor in native mode. The size of the memory and index register
 ; operations is not controlled by the M & X bits in the status register.
 
-native          macro
+.macro          native
                 clc
                 xce
-                endm
+.endmacro
 
 ; Resets the M bit making the accumulator and memory accesses 16-bits wide.
  
-long_a          macro
+.macro          long_a
                 rep     #M_FLAG
-                longa   on
-                endm
+                .a16
+.endmacro
 
 ; Resets the X bit making the index registers 16-bits wide
 
-long_i          macro
+.macro          long_i
                 rep     #X_FLAG
-                longi   on
-                endm
+                .i16
+.endmacro
 
 ; Resets the M and X bits making the accumulator, memory accesses and index
 ; registers 16-bits wide.
                 
-long_ai         macro
+.macro          long_ai
                 rep     #M_FLAG|X_FLAG
-                longa   on
-                longi   on
-                endm
+                .a16
+                .i16
+.endmacro
 
 ; Sets the M bit making the accumulator and memory accesses 8-bits wide.
 
-short_a         macro
+.macro          short_a
                 sep     #M_FLAG
-                longa   off
-                endm
+                .a8
+.endmacro
 
 ; Sets the X bit making the index registers 8-bits wide.
 
-short_i         macro
+.macro          short_i
                 sep     #X_FLAG
-                longi   off
-                endm
+                .i8
+.endmacro
                 
 ; Sets the M & X bits making the accumulator, memory accesses and index
 ; registers 8-bits wide.
 
-short_ai        macro
+.macro          short_ai
                 sep     #M_FLAG|X_FLAG
-                longa   off
-                longi   off
-                endm
+                .a8
+                .i8
+.endmacro
